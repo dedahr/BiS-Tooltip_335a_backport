@@ -3,7 +3,7 @@ Bistooltip_phases_string = ""
 
 local function specHighlighted(class_name, spec_name)
     return (BistooltipAddon.db.char.highlight_spec.spec_name == spec_name and
-               BistooltipAddon.db.char.highlight_spec.class_name == class_name)
+        BistooltipAddon.db.char.highlight_spec.class_name == class_name)
 end
 
 local function specFiltered(class_name, spec_name)
@@ -166,8 +166,12 @@ local function GetItemSource(itemId)
         for boss, items in pairs(bosses) do
             if table.contains(items, itemId) then
                 local formattedZone = formatInstanceName(zone)
-                source = "|cFFFFFFFFSource:|r |cFF00FF00[" .. formattedZone .. "] - " .. boss .. "|r"
-                break
+                if source ~= nil then
+                    source = source .. "|cFFFFFFFFSource:|r |cFF00FF00" .. formattedZone .. " - " .. boss .. "|r\n"
+                else
+                    source = "|cFFFFFFFFSource:|r |cFF00FF00" .. formattedZone .. " - " .. boss .. "|r\n"
+                end
+                --break
             end
         end
         if source then
@@ -176,12 +180,12 @@ local function GetItemSource(itemId)
     end
 
     -- If not found in lootTable, fallback to DataStore_Inventory (example usage)
-    if not source then
+    if not source and DataStore_Inventory ~= nil then
         -- Replace with your logic to load DataStore_Inventory and get source
         local Instance, Boss = DataStore_Inventory:GetSource(itemId)
         if Instance and Boss then
             local formattedInstance = formatInstanceName(Instance)
-            source = "|cFFFFFFFFSource:|r |cFF00FF00[" .. formattedInstance .. "] - " .. Boss .. "|r"
+            source = "|cFFFFFFFFSource:|r |cFF00FF00" .. formattedInstance .. " - " .. Boss .. "|r"
         else
             return nil
         end
@@ -192,7 +196,7 @@ end
 
 -- Function to handle item tooltip
 local function OnGameTooltipSetItem(tooltip)
-    -- print("Debug: OnGameTooltipSetItem called")
+    --print("Debug: OnGameTooltipSetItem called")
     if BistooltipAddon.db.char.tooltip_with_ctrl and not IsControlKeyDown() then
         return
     end
@@ -210,6 +214,17 @@ local function OnGameTooltipSetItem(tooltip)
     end
 
     -- tooltip:AddDoubleLine("Spec Name", "Phase", 1, 1, 1, 1, 1, 1)
+    tooltip:AddLine(" ", 1, 1, 0)
+    tooltip:AddLine("|cffff0000BIS-TOOLTIP:|r", 1, 1, 0)
+
+    -- Fetch item source information
+    local itemSource = GetItemSource(itemId)
+    -- Add item source information to tooltip if available
+    if itemSource then
+        --tooltip:AddLine(" ", 1, 1, 0)
+        tooltip:AddLine(itemSource, 1, 1, 1)
+        --tooltip:AddLine(" ", 1, 1, 0)
+    end
 
     -- -- Iterate through each class and specialization
     for class, specs in caseInsensitivePairs(Bistooltip_spec_icons) do
@@ -243,21 +258,35 @@ local function OnGameTooltipSetItem(tooltip)
     --     end
     -- end
 
-    -- tooltip:AddLine(" ", 1, 1, 0)
+    tooltip:AddLine(" ", 1, 1, 0)
     -- tooltip:AddLine("Hold ALT to disable spec filtering", 0.6, 0.6, 0.6)
-
-    -- Fetch item source information
-    local itemSource = GetItemSource(itemId)
-
-    -- Add item source information to tooltip if available
-    if itemSource then
-        tooltip:AddLine(" ", 1, 1, 0)
-        tooltip:AddLine(itemSource, 1, 1, 1)
-        tooltip:AddLine(" ", 1, 1, 0)
-    end
 end
 
+-- function BistooltipAddon:initBisTooltip()
+    -- eventFrame:RegisterEvent("MODIFIER_STATE_CHANGED")
+    -- eventFrame:SetScript("OnEvent", function(_, _, e_key, _, _)
+        -- if GameTooltip:GetOwner() then
+            -- if GameTooltip:GetOwner().hasItem then
+                -- return
+            -- end
+
+            -- if e_key == "RALT" or e_key == "LALT" then
+                -- local _, link = GameTooltip:GetItem()
+                -- if link then
+                    -- GameTooltip:SetHyperlink("|cff9d9d9d|Hitem:3299::::::::20:257::::::|h[Fractured Canine]|h|r")
+                    -- GameTooltip:SetHyperlink(link)
+                -- end
+            -- end
+        -- end
+    -- end)
+
+    -- GameTooltip:HookScript("OnTooltipSetItem", OnGameTooltipSetItem)
+    -- ItemRefTooltip:HookScript("OnTooltipSetItem", OnGameTooltipSetItem)
+    -- AtlasLootTooltip:HookScript("OnTooltipSetItem", OnGameTooltipSetItem)
+-- end
+
 function BistooltipAddon:initBisTooltip()
+    -- Register MODIFIER_STATE_CHANGED for ALT key customizations
     eventFrame:RegisterEvent("MODIFIER_STATE_CHANGED")
     eventFrame:SetScript("OnEvent", function(_, _, e_key, _, _)
         if GameTooltip:GetOwner() then
@@ -275,6 +304,34 @@ function BistooltipAddon:initBisTooltip()
         end
     end)
 
-    GameTooltip:HookScript("OnTooltipSetItem", OnGameTooltipSetItem)
-    ItemRefTooltip:HookScript("OnTooltipSetItem", OnGameTooltipSetItem)
+    -- Hook all tooltips, including comparison tooltips
+    local function HookTooltipWithOnTooltipSetItem(tooltip)
+        tooltip:HookScript("OnTooltipSetItem", function(self)
+            -- Apply your existing OnGameTooltipSetItem logic
+            OnGameTooltipSetItem(self)
+
+            -- Trigger Shift-key comparison tooltips manually for GameTooltip and AtlasLootTooltip
+            if self == GameTooltip or self == AtlasLootTooltip then
+                local item, link = self:GetItem()
+                if link then
+                    ShoppingTooltip1:SetHyperlinkCompareItem(link, 1)
+                    OnGameTooltipSetItem(ShoppingTooltip1) -- Apply BiSTooltip logic to 1st comparison
+                    ShoppingTooltip1:Show()
+
+                    ShoppingTooltip2:SetHyperlinkCompareItem(link, 2)
+                    OnGameTooltipSetItem(ShoppingTooltip2) -- Apply BiSTooltip logic to 2nd comparison
+                    ShoppingTooltip2:Show()
+                end
+            end
+        end)
+    end
+
+    -- Apply the hook to all relevant tooltips
+    HookTooltipWithOnTooltipSetItem(GameTooltip)
+    HookTooltipWithOnTooltipSetItem(ItemRefTooltip)
+    HookTooltipWithOnTooltipSetItem(AtlasLootTooltip)
+
+    -- Debug message to confirm initialization
+    --print("BistooltipAddon: All tooltips and both comparison tooltips hooked successfully!")
 end
+

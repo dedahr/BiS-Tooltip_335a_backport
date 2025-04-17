@@ -33,7 +33,8 @@ local function createEquipmentWatcher()
     frame:Hide()
 
     frame:SetScript("OnEvent", frame.Show)
-    frame:RegisterEvent("BAG_UPDATE")
+    frame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
+	--frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 
     local flag = false
 
@@ -41,35 +42,36 @@ local function createEquipmentWatcher()
         self:Hide()
         if not flag then
             flag = true
+			--print("BAG_UPDATE Event Fired") -- debug --
             local collection = {}
 
-            -- Check player's bags (inventory)
-            for bag = 0, NUM_BAG_SLOTS do
-                local numSlots = GetContainerNumSlots(bag)
-                for slot = 1, numSlots do
-                    local itemLink = GetContainerItemLink(bag, slot)
-                    if itemLink then
-                        local itemID = tonumber(string.match(itemLink, "item:(%d+):"))
-                        if itemID then
-                            collection[itemID] = 1 -- Item is in bags
-                        end
-                    end
-                end
-            end
+            -- -- Check player's bags (inventory)
+            -- for bag = 0, NUM_BAG_SLOTS do
+                -- local numSlots = GetContainerNumSlots(bag)
+                -- for slot = 1, numSlots do
+                    -- local itemLink = GetContainerItemLink(bag, slot)
+                    -- if itemLink then
+                        -- local itemID = tonumber(string.match(itemLink, "item:(%d+):"))
+                        -- if itemID then
+                            -- collection[itemID] = 1 -- Item is in bags
+                        -- end
+                    -- end
+                -- end
+            -- end
 
-            -- Check player's bank
-            for bankBag = NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
-                local numSlots = GetContainerNumSlots(bankBag)
-                for slot = 1, numSlots do
-                    local itemLink = GetContainerItemLink(bankBag, slot)
-                    if itemLink then
-                        local itemID = tonumber(string.match(itemLink, "item:(%d+):"))
-                        if itemID then
-                            collection[itemID] = 1 -- Item is in bank
-                        end
-                    end
-                end
-            end
+            -- -- Check player's bank
+            -- for bankBag = NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
+                -- local numSlots = GetContainerNumSlots(bankBag)
+                -- for slot = 1, numSlots do
+                    -- local itemLink = GetContainerItemLink(bankBag, slot)
+                    -- if itemLink then
+                        -- local itemID = tonumber(string.match(itemLink, "item:(%d+):"))
+                        -- if itemID then
+                            -- collection[itemID] = 1 -- Item is in bank
+                        -- end
+                    -- end
+                -- end
+            -- end
 
             -- Check worn equipment
             for i = 1, 19 do
@@ -79,14 +81,14 @@ local function createEquipmentWatcher()
                 end
             end
 
-            -- Check items using GetItemCount
-            local itemIDs = collectItemIDs(Bistooltip_bislists)
-            for _, itemID in ipairs(itemIDs) do
-                local count = GetItemCount(itemID, true) -- true includes the bank
-                if count > 0 then
-                    collection[itemID] = 1 -- Store the item count
-                end
-            end
+            -- -- Check items using GetItemCount
+            -- local itemIDs = collectItemIDs(Bistooltip_bislists)
+            -- for _, itemID in ipairs(itemIDs) do
+                -- local count = GetItemCount(itemID, true) -- true includes the bank
+                -- if count > 0 then
+                    -- collection[itemID] = 1 -- Store the item count
+                -- end
+            -- end
 
             Bistooltip_char_equipment = collection
             flag = false

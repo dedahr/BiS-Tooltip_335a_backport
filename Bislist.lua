@@ -234,6 +234,9 @@ local function drawSpecData()
         return
     end
     local slots = Bistooltip_bislists[class][spec][phase]
+	if slots == nil then
+		return
+	end
     for i, slot in ipairs(slots) do
         drawItemSlot(slot)
     end
