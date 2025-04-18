@@ -32,69 +32,28 @@ local function createEquipmentWatcher()
     local frame = CreateFrame("Frame")
     frame:Hide()
 
-    frame:SetScript("OnEvent", frame.Show)
-    frame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
-	--frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+    -- Update only on worn equipment change, old code produce lag on loot and
+	-- every class which extensively use consumables/amo from bag in combat
+    frame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED") -- Triggered when equipment changes
 
-    local flag = false
+    frame:SetScript("OnEvent", frame.Show)
 
     frame:SetScript("OnUpdate", function(self, elapsed)
-        self:Hide()
-        if not flag then
-            flag = true
-			--print("BAG_UPDATE Event Fired") -- debug --
-            local collection = {}
+        self:Hide() -- Hide the frame to stop updates once processing is done
 
-            -- -- Check player's bags (inventory)
-            -- for bag = 0, NUM_BAG_SLOTS do
-                -- local numSlots = GetContainerNumSlots(bag)
-                -- for slot = 1, numSlots do
-                    -- local itemLink = GetContainerItemLink(bag, slot)
-                    -- if itemLink then
-                        -- local itemID = tonumber(string.match(itemLink, "item:(%d+):"))
-                        -- if itemID then
-                            -- collection[itemID] = 1 -- Item is in bags
-                        -- end
-                    -- end
-                -- end
-            -- end
+        local collection = {}
 
-            -- -- Check player's bank
-            -- for bankBag = NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
-                -- local numSlots = GetContainerNumSlots(bankBag)
-                -- for slot = 1, numSlots do
-                    -- local itemLink = GetContainerItemLink(bankBag, slot)
-                    -- if itemLink then
-                        -- local itemID = tonumber(string.match(itemLink, "item:(%d+):"))
-                        -- if itemID then
-                            -- collection[itemID] = 1 -- Item is in bank
-                        -- end
-                    -- end
-                -- end
-            -- end
-
-            -- Check worn equipment
-            for i = 1, 19 do
-                local itemID = GetInventoryItemID("player", i)
-                if itemID then
-                    collection[itemID] = 2 -- Item is equipped
-                end
+        -- Check worn equipment (equipped items)
+        for i = 1, 19 do
+            local itemID = GetInventoryItemID("player", i)
+            if itemID then
+                collection[itemID] = 2 -- Mark item as equipped
             end
-
-            -- -- Check items using GetItemCount
-            -- local itemIDs = collectItemIDs(Bistooltip_bislists)
-            -- for _, itemID in ipairs(itemIDs) do
-                -- local count = GetItemCount(itemID, true) -- true includes the bank
-                -- if count > 0 then
-                    -- collection[itemID] = 1 -- Store the item count
-                -- end
-            -- end
-
-            Bistooltip_char_equipment = collection
-            flag = false
         end
-    end)
 
+        -- Store processed equipment data
+        Bistooltip_char_equipment = collection
+    end)
 end
 
 function BistooltipAddon:OnInitialize()
