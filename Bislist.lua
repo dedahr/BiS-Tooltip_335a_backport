@@ -474,6 +474,19 @@ function BistooltipAddon:createMainFrame()
         AceGUI:Release(widget)
         main_frame = nil
     end)
+	
+	-- Manually intercept ESC key presses
+    local parentFrame = main_frame.frame
+    parentFrame:SetScript("OnKeyDown", function(self, key)
+        if key == "ESCAPE" then
+            main_frame:Hide() -- Hide the frame on ESC key press
+            BistooltipAddon:closeMainFrame() -- Invoke cleanup logic
+        end
+    end)
+
+    parentFrame:EnableKeyboard(true) -- Ensure the frame can receive keyboard input
+
+	
     main_frame:SetLayout("List")
     main_frame:SetTitle(BistooltipAddon.AddonNameAndVersion)
     main_frame:SetStatusText(Bistooltip_source_to_url[BistooltipAddon.db.char["data_source"]])
