@@ -229,7 +229,16 @@ function BistooltipAddon:initBisTooltip()
     -- Apply hooks to relevant tooltips
     HookTooltipWithOnTooltipSetItem(GameTooltip)
     HookTooltipWithOnTooltipSetItem(ItemRefTooltip)
-    HookTooltipWithOnTooltipSetItem(AtlasLootTooltip)
+
+    -- Check if AtlasLoot is loaded and running
+    if IsAddOnLoaded("AtlasLoot") then
+        print("AtlasLoot is loaded and running!") -- Debug message
+        HookTooltipWithOnTooltipSetItem(AtlasLootTooltip)
+    else
+        print("AtlasLoot is not loaded or running.") -- Debug message
+    end
+
+    -- Hook additional shopping tooltips
     HookTooltipWithOnTooltipSetItem(ShoppingTooltip1)
     HookTooltipWithOnTooltipSetItem(ShoppingTooltip2)
     HookTooltipWithOnTooltipSetItem(ShoppingTooltip3)
